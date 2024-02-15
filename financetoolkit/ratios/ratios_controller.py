@@ -2999,28 +2999,27 @@ class Ratios:
         ```
         """
         if trailing:
-            return_on_equity = profitability_model.get_return_on_equity(
-                self._income_statement.loc[:, "Net Income", :]
-                .T.rolling(trailing)
-                .sum()
-                .T,
-                self._balance_sheet_statement.loc[:, "Total Equity", :]
-                .shift(axis=1)
-                .T.rolling(trailing)
-                .sum()
-                .T,
-                self._balance_sheet_statement.loc[:, "Total Equity", :]
-                .T.rolling(trailing)
-                .sum()
-                .T,
-            )
-
+            net_income = self._income_statement.loc[:, "Net Income", :].T.rolling(trailing).sum().T
+            total_equity_begin = self._balance_sheet_statement.loc[:, "Total Equity", :].shift(axis=1).T.rolling(trailing).sum().T
+            goodwill_begin = self._balance_sheet_statement.loc[:, "Goodwill", :].shift(axis=1).T.rolling(trailing).sum().T
+            invested_equity_begin = total_equity_begin - goodwill_begin
+            total_equity_end = self._balance_sheet_statement.loc[:, "Total Equity", :].T.rolling(trailing).sum().T
+            goodwill_end = self._balance_sheet_statement.loc[:, "Goodwill", :].shift(axis=1).T.rolling(trailing).sum().T
+            invested_equity_end = total_equity_end - goodwill_end
+            return_on_equity = profitability_model.get_return_on_equity(net_income,
+                                                                        invested_equity_begin,
+                                                                        invested_equity_end)
         else:
-            return_on_equity = profitability_model.get_return_on_equity(
-                self._income_statement.loc[:, "Net Income", :],
-                self._balance_sheet_statement.loc[:, "Total Equity", :].shift(axis=1),
-                self._balance_sheet_statement.loc[:, "Total Equity", :],
-            )
+            net_income = self._income_statement.loc[:, "Net Income", :]
+            total_equity_begin = self._balance_sheet_statement.loc[:, "Total Equity", :].shift(axis=1)
+            goowill_begin = self._balance_sheet_statement.loc[:, "Goodwill", :].shift(axis=1)
+            invested_equity_begin = total_equity_begin - goowill_begin
+            total_equity_end = self._balance_sheet_statement.loc[:, "Total Equity", :]
+            goodwill_end = self._balance_sheet_statement.loc[:, "Goodwill", :]
+            invested_equity_end = total_equity_end - goodwill_end
+            return_on_equity = profitability_model.get_return_on_equity(net_income,
+                                                                        invested_equity_begin,
+                                                                        invested_equity_end)
 
         if growth:
             return calculate_growth(
@@ -3079,53 +3078,48 @@ class Ratios:
         ```
         """
         if trailing:
+            operating_income = self._income_statement.loc[:, "Operating Income", :].T.rolling(trailing).sum().T
+            income_tax = self._income_statement.loc[:, "Income Tax Expense", :].T.rolling(trailing).sum().T
+            income_before_tax = self._income_statement.loc[:, "Income Before Tax", :].T.rolling(trailing).sum().T
+            effective_tax_rate = profitability_model.get_effective_tax_rate(income_tax, income_before_tax)
+            total_assets_begin = self._balance_sheet_statement.loc[:, "Total Assets", :].shift(axis=1).T.rolling(trailing).sum().T
+            total_assets_end = self._balance_sheet_statement.loc[:, "Total Assets", :].T.rolling(trailing).sum().T
+            cash_and_cash_equivalents_begin = self._balance_sheet_statement.loc[:, "Cash and Cash Equivalents", :].shift(axis=1).T.rolling(trailing).sum().T
+            cash_and_cash_equivalents_end = self._balance_sheet_statement.loc[:, "Cash and Cash Equivalents", :].T.rolling(trailing).sum().T
+            short_term_investments_begin = self._balance_sheet_statement.loc[:, "Short Term Investments", :].shift(axis=1).T.rolling(trailing).sum().T
+            short_term_investments_end = self._balance_sheet_statement.loc[:, "Short Term Investments", :].T.rolling(trailing).sum().T
+            invested_capital_begin = total_assets_begin - cash_and_cash_equivalents_begin - short_term_investments_begin
+            invested_capital_end = total_assets_end - cash_and_cash_equivalents_end - short_term_investments_end
+
+
             return_on_invested_capital = (
-                profitability_model.get_return_on_invested_capital(
-                    self._income_statement.loc[:, "Net Income", :]
-                    .T.rolling(trailing)
-                    .sum()
-                    .T,
-                    self._cash_flow_statement.loc[:, "Dividends Paid", :]
-                    .T.rolling(trailing)
-                    .sum()
-                    .T
-                    if dividend_adjusted
-                    else 0,
-                    self._balance_sheet_statement.loc[:, "Total Equity", :]
-                    .shift(axis=1)
-                    .T.rolling(trailing)
-                    .sum()
-                    .T,
-                    self._balance_sheet_statement.loc[:, "Total Equity", :]
-                    .T.rolling(trailing)
-                    .sum()
-                    .T,
-                    self._balance_sheet_statement.loc[:, "Total Debt", :]
-                    .shift(axis=1)
-                    .T.rolling(trailing)
-                    .sum()
-                    .T,
-                    self._balance_sheet_statement.loc[:, "Total Debt", :]
-                    .T.rolling(trailing)
-                    .sum()
-                    .T,
+                profitability_model.get_return_on_invested_capital(operating_income,
+                                                                   effective_tax_rate,
+                                                                   invested_capital_begin,
+                                                                   invested_capital_end,
+                                                                   )
                 )
-            )
         else:
+            operating_income = self._income_statement.loc[:, "Operating Income", :]
+            income_tax = self._income_statement.loc[:, "Income Tax Expense", :]
+            income_before_tax = self._income_statement.loc[:, "Income Before Tax", :]
+            effective_tax_rate = profitability_model.get_effective_tax_rate(income_tax, income_before_tax)
+            total_assets_begin = self._balance_sheet_statement.loc[:, "Total Assets", :].shift(axis=1)
+            total_assets_end = self._balance_sheet_statement.loc[:, "Total Assets", :]
+            cash_and_cash_equivalents_begin = self._balance_sheet_statement.loc[:, "Cash and Cash Equivalents", :].shift(axis=1)
+            cash_and_cash_equivalents_end = self._balance_sheet_statement.loc[:, "Cash and Cash Equivalents", :]
+            short_term_investments_begin = self._balance_sheet_statement.loc[:, "Short Term Investments", :].shift(axis=1)
+            short_term_investments_end = self._balance_sheet_statement.loc[:, "Short Term Investments", :]
+            invested_capital_begin = total_assets_begin - cash_and_cash_equivalents_begin - short_term_investments_begin
+            invested_capital_end = total_assets_end - cash_and_cash_equivalents_end - short_term_investments_end
+
             return_on_invested_capital = (
-                profitability_model.get_return_on_invested_capital(
-                    self._income_statement.loc[:, "Net Income", :],
-                    self._cash_flow_statement.loc[:, "Dividends Paid", :]
-                    if dividend_adjusted
-                    else 0,
-                    self._balance_sheet_statement.loc[:, "Total Equity", :].shift(
-                        axis=1
-                    ),
-                    self._balance_sheet_statement.loc[:, "Total Equity", :],
-                    self._balance_sheet_statement.loc[:, "Total Debt", :].shift(axis=1),
-                    self._balance_sheet_statement.loc[:, "Total Debt", :],
+                profitability_model.get_return_on_invested_capital(operating_income,
+                                                                   effective_tax_rate,
+                                                                   invested_capital_begin,
+                                                                   invested_capital_end,
+                                                                   )
                 )
-            )
 
         if growth:
             return calculate_growth(

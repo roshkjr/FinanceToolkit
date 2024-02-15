@@ -143,8 +143,8 @@ def get_return_on_assets(
 
 def get_return_on_equity(
     net_income: pd.Series,
-    total_equity_begin: pd.Series,
-    total_equity_end: pd.Series,
+    invested_equity_begin: pd.Series,
+    invested_equity_end: pd.Series,
 ) -> pd.Series:
     """
     Calculate the return on equity (ROE), a profitability ratio that measures how
@@ -152,41 +152,36 @@ def get_return_on_equity(
 
     Args:
         net_income (float or pd.Series): Net income of the company.
-        total_equity_begin (float or pd.Series): Total equity at the beginning of the period.
-        total_equity_end (float or pd.Series): Total equity at the end of the period.
+        invested_equity_begin (float or pd.Series): Invested equity at the beginning of the period.
+        invested_equity_end (float or pd.Series): Invested equity at the end of the period.
 
     Returns:
         float | pd.Series: The ROE percentage value.
     """
-    return net_income / ((total_equity_begin + total_equity_end) / 2)
+    return net_income / ((invested_equity_begin + invested_equity_end) / 2)
 
 
 def get_return_on_invested_capital(
-    net_income: pd.Series,
-    dividends: pd.Series,
-    total_equity_begin: pd.Series,
-    total_equity_end: pd.Series,
-    total_debt_begin: pd.Series,
-    total_debt_end: pd.Series,
+    operating_income: pd.Series,
+    effective_tax_rate: pd.Series,
+    invested_capital_begin: pd.Series,
+    invested_capital_end: pd.Series,
 ) -> pd.Series:
     """
     Calculate the return on invested capital, a financial ratio that measures the company's return on
     the capital invested in it, including both equity and debt.
 
     Args:
-        net_income (float or pd.Series): The company's net income.
-        dividends (float or pd.Series): The dividends paid by the company.
+        operating_income (float or pd.Series): The company's operating income.
         effective_tax_rate (float or pd.Series): The effective tax rate of the company.
-        total_equity_begin (float or pd.Series): The total equity at the beginning of the period.
-        totaL_equity_end (float or pd.Series): The total equity at the end of the period.
-        total_debt_begin (float or pd.Series): The total debt at the beginning of the period.
-        total_debt_end (float or pd.Series): The total debt at the end of the period.
+        invested_capital_begin (float or pd.Series): The invested capital at the beginning of the period.
+        invested_capital_end (float or pd.Series): The invested capital at the end of the period.
 
     Returns:
         float | pd.Series: The return on invested capital value.
     """
-    return (net_income - dividends) / (
-        (total_equity_begin + total_equity_end + total_debt_begin + total_debt_end) / 2
+    return (operating_income * (1-effective_tax_rate)) / (
+        (invested_capital_begin + invested_capital_end) / 2
     )
 
 
